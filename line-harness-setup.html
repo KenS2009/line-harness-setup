@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINE Harness × Claude Code セットアップ指示書</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --line-green: #00e676;
+    --line-green-dim: #00c45a;
+    --accent: #64ffda;
+    --accent2: #ff6b6b;
+    --text: #e8f0fe;
+    --text-muted: #8892a4;
+    --border: rgba(100,255,218,0.15);
+    --glow: 0 0 20px rgba(0,230,118,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif JP', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(100,255,218,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(100,255,218,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 30px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    text-align: center;
+    margin-bottom: 70px;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .header-badge {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--line-green);
+    border: 1px solid var(--line-green);
+    padding: 6px 16px;
+    border-radius: 2px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+
+  .header h1 {
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+  }
+
+  .header h1 .highlight {
+    color: var(--line-green);
+    text-shadow: var(--glow);
+  }
+
+  .header-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    line-height: 1.8;
+  }
+
+  .cost-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(0,230,118,0.1), rgba(100,255,218,0.05));
+    border: 1px solid rgba(0,230,118,0.3);
+    border-radius: 4px;
+    padding: 12px 24px;
+    margin-top: 24px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+  }
+
+  .cost-banner .price-old {
+    color: var(--accent2);
+    text-decoration: line-through;
+    opacity: 0.8;
+  }
+
+  .cost-banner .arrow { color: var(--text-muted); }
+
+  .cost-banner .price-new {
+    color: var(--line-green);
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  /* ===== STEP CARDS ===== */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease both;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .step:hover {
+    border-color: rgba(0,230,118,0.4);
+    box-shadow: 0 4px 30px rgba(0,230,118,0.08);
+  }
+
+  .step:nth-child(1) { animation-delay: 0.1s; }
+  .step:nth-child(2) { animation-delay: 0.2s; }
+  .step:nth-child(3) { animation-delay: 0.3s; }
+  .step:nth-child(4) { animation-delay: 0.4s; }
+  .step:nth-child(5) { animation-delay: 0.5s; }
+  .step:nth-child(6) { animation-delay: 0.6s; }
+  .step:nth-child(7) { animation-delay: 0.7s; }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface2);
+  }
+
+  .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--bg);
+    background: var(--line-green);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0;
+  }
+
+  .step-title-wrap { flex: 1; }
+
+  .step-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .step-meta {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+
+  .step-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .tag-free { color: var(--line-green); border-color: rgba(0,230,118,0.4); }
+  .tag-required { color: var(--accent); border-color: rgba(100,255,218,0.4); }
+  .tag-key { color: var(--accent2); border-color: rgba(255,107,107,0.4); }
+
+  .chevron {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .step.open .chevron { transform: rotate(180deg); }
+
+  .step-body {
+    padding: 0 24px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s;
+  }
+
+  .step.open .step-body {
+    padding: 24px 24px 28px;
+    max-height: 2000px;
+  }
+
+  /* ===== CONTENT INSIDE STEPS ===== */
+  .step-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.9;
+    margin-bottom: 20px;
+  }
+
+  .substeps {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .substep {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .substep-dot {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--line-green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .substep-dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--line-green);
+    border-radius: 50%;
+  }
+
+  .substep-text {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .substep-text a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(100,255,218,0.3);
+  }
+
+  .substep-text a:hover { border-color: var(--accent); }
+
+  /* Code blocks */
+  .code-block {
+    background: #070d1a;
+    border: 1px solid rgba(100,255,218,0.12);
+    border-left: 3px solid var(--line-green);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    line-height: 1.9;
+    color: #a8c7fa;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .code-block .comment { color: #546e7a; }
+  .code-block .cmd { color: var(--line-green); }
+  .code-block .str { color: #f48fb1; }
+  .code-block .key { color: var(--accent); }
+
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .copy-btn:hover { color: var(--accent); border-color: rgba(100,255,218,0.4); }
+  .copy-btn.copied { color: var(--line-green); border-color: rgba(0,230,118,0.4); }
+
+  /* Tip box */
+  .tip {
+    display: flex;
+    gap: 12px;
+    background: rgba(100,255,218,0.04);
+    border: 1px solid rgba(100,255,218,0.12);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text-muted);
+  }
+
+  .tip-icon { font-size: 16px; flex-shrink: 0; }
+
+  .warn {
+    background: rgba(255,107,107,0.05);
+    border-color: rgba(255,107,107,0.2);
+  }
+
+  /* Section divider */
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin: 48px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255,255,255,0.05);
+    z-index: 100;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--line-green);
+    width: 0;
+    transition: width 0.1s;
+    box-shadow: 0 0 8px var(--line-green);
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 80px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+    line-height: 2;
+    animation: fadeUp 0.6s ease 0.8s both;
+  }
+
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  /* Summary table */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 16px;
+  }
+
+  .summary-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .summary-table td {
+    padding: 12px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .summary-table td:last-child {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+  }
+
+  .free { color: var(--line-green); }
+  .paid { color: var(--accent2); }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="progress-wrap"><div class="progress-bar" id="progress"></div></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-badge">Setup Guide v1.0</div>
+    <h1>LINE Harness<br><span class="highlight">× Claude Code</span><br>セットアップ指示書</h1>
+    <p class="header-sub">
+      Lステップ不要。月額0円でLINE公式アカウントを<br>
+      AI（Claude Code）から自然言語で自動運用する。
+    </p>
+    <div class="cost-banner">
+      <span class="price-old">Lステップ：261,360円/年</span>
+      <span class="arrow">→</span>
+      <span class="price-new">LINE Harness：0円/年</span>
+    </div>
+  </div>
+
+  <!-- PHASE 1 -->
+  <div class="section-label">Phase 1 — アカウント・環境準備</div>
+
+  <div class="steps">
+
+    <!-- STEP 1 -->
+    <div class="step open" id="step1">
+      <div class="step-header" onclick="toggleStep('step1')">
+        <div class="step-num">01</div>
+        <div class="step-title-wrap">
+          <div class="step-title">LINE公式アカウントを作成する</div>
+          <div class="step-meta">LINE Developers · Messaging API</div>
+        </div>
+        <span class="step-tag tag-free">FREE</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="step-body">
+        <p class="step-desc">LINE公式アカウントとMessaging APIチャネルを作成します。無料プランで月1,000通まで送信可能です。</p>
+        <div class="substeps">
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              <a href="https://www.linebiz.com/jp/entry/" target="_blank">LINE公式アカウント開設ページ</a>にアクセスし、アカウントを作成する（個人LINEアカウントで登録可）
+            </div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              <a href="https://developers.line.biz/" target="_blank">LINE Developers Console</a>にログインし、プロバイダーを作成
+            </div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              「Messaging APIチャネル」を作成 → チャネルシークレットとチャネルアクセストークン（長期）を発行・メモしておく
+            </div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              （任意・推奨）「LINEログインチャネル」も作成する。友だち追加の流入経路追跡・UUID管理に必要
+            </div>
+          </div>
+        </div>
+        <div class="tip">
+          <span class="tip-icon">💡</span>
+          <span>LINEログインチャネルがないと流入追跡・マルチアカウント統合が機能しません。後から設定も可能ですが、最初から作ることを推奨します。</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step" id="step2">
+      <div class="step-header" onclick="toggleStep('step2')">
+        <div class="step-num">02</div>
+        <div class="step-title-wrap">
+          <div class="step-title">Cloudflareアカウントを作成する</div>
+          <div class="step-meta">Cloudflare Workers · D1 Database</div>
+        </div>
+        <span class="step-tag tag-free">FREE</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="step-body">
+        <p class="step-desc">サーバー代0円の秘密はCloudflareの無料枠です。5,000友だちまでこれだけで運用できます。</p>
+        <div class="substeps">
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              <a href="https://dash.cloudflare.com/sign-up" target="_blank">Cloudflare</a>にアクセスし、無料アカウントを作成
+            </div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              Wrangler CLI（Cloudflare開発ツール）をインストール：Node.js（v18以上）が必要
+            </div>
+          </div>
+        </div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+          <span class="comment"># Node.jsのバージョン確認（v18以上が必要）</span><br>
+          <span class="cmd">node</span> --version<br><br>
+          <span class="comment"># Wrangler CLIをグローバルインストール</span><br>
+          <span class="cmd">npm</span> install -g wrangler<br><br>
+          <span class="comment"># Cloudflareにログイン</span><br>
+          <span class="cmd">wrangler</span> login
+        </div>
+        <div class="tip">
+          <span class="tip-icon">📊</span>
+          <span>Cloudflare無料枠：Workers 10万リクエスト/日、D1 5GB。5,000友だち規模なら余裕で収まります。</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PHASE 2 -->
+  <div class="section-label">Phase 2 — LINE Harnessのデプロイ</div>
+
+  <div class="steps">
+
+    <!-- STEP 3 -->
+    <div class="step" id="step3">
+      <div class="step-header" onclick="toggleStep('step3')">
+        <div class="step-num">03</div>
+        <div class="step-title-wrap">
+          <div class="step-title">リポジトリをクローンしてインストール</div>
+          <div class="step-meta">GitHub · pnpm · Node.js</div>
+        </div>
+        <span class="step-tag tag-required">REQUIRED</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="step-body">
+        <p class="step-desc">GitHubからソースコードを取得し、依存関係をインストールします。pnpmが必要です。</p>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+          <span class="comment"># pnpmがない場合はインストール</span><br>
+          <span class="cmd">npm</span> install -g pnpm<br><br>
+          <span class="comment"># リポジトリをクローン</span><br>
+          <span class="cmd">git</span> clone https://github.com/Shudesu/line-harness-oss.git<br>
+          <span class="cmd">cd</span> line-harness-oss<br><br>
+          <span class="comment"># 依存パッケージをインストール</span><br>
+          <span class="cmd">pnpm</span> install
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step" id="step4">
+      <div class="step-header" onclick="toggleStep('step4')">
+        <div class="step-num">04</div>
+        <div class="step-title-wrap">
+          <div class="step-title">D1データベースを作成する</div>
+          <div class="step-meta">Cloudflare D1 · SQLite · 42テーブル</div>
+        </div>
+        <span class="step-tag tag-free">FREE</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="step-body">
+        <p class="step-desc">Cloudflare D1（SQLiteベース）にデータベースを作成し、LINE Harnessのスキーマ（42テーブル）を適用します。</p>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+          <span class="comment"># D1データベースを作成（出力されるdatabase_idをメモ）</span><br>
+          <span class="cmd">npx</span> wrangler d1 create line-crm<br><br>
+          <span class="comment"># スキーマを適用（42テーブルが作成される）</span><br>
+          <span class="cmd">npx</span> wrangler d1 execute line-crm \<br>
+            &nbsp;&nbsp;--file=packages/db/schema.sql
+        </div>
+        <div class="substeps">
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              上記コマンドで表示される <code style="color:var(--accent);background:rgba(100,255,218,0.08);padding:2px 6px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;">database_id</code> を <code style="color:var(--accent);background:rgba(100,255,218,0.08);padding:2px 6px;border-radius:2px;font-family:'Space Mono',monospace;font-size:11px;">apps/worker/wrangler.toml</code> に記入する
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step" id="step5">
+      <div class="step-header" onclick="toggleStep('step5')">
+        <div class="step-num">05</div>
+        <div class="step-title-wrap">
+          <div class="step-title">シークレットキーを設定してデプロイ</div>
+          <div class="step-meta">LINE API Keys · Cloudflare Secrets</div>
+        </div>
+        <span class="step-tag tag-key">API KEY</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="step-body">
+        <p class="step-desc">STEP 1でメモしたLINEのAPIキーをCloudflare Workersのシークレットとして登録し、デプロイします。</p>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+          <span class="comment"># LINEのAPIキーをシークレットとして登録</span><br>
+          <span class="cmd">npx</span> wrangler secret put <span class="key">LINE_CHANNEL_SECRET</span><br>
+          <span class="cmd">npx</span> wrangler secret put <span class="key">LINE_CHANNEL_ACCESS_TOKEN</span><br>
+          <span class="cmd">npx</span> wrangler secret put <span class="key">API_KEY</span>&nbsp;&nbsp;<span class="comment"># 任意の文字列でOK</span><br><br>
+          <span class="comment"># LINEログインチャネルも使う場合（推奨）</span><br>
+          <span class="cmd">npx</span> wrangler secret put <span class="key">LINE_LOGIN_CHANNEL_ID</span><br>
+          <span class="cmd">npx</span> wrangler secret put <span class="key">LINE_LOGIN_CHANNEL_SECRET</span><br><br>
+          <span class="comment"># Cloudflare WorkersにデプロイするにはWorkerディレクトリで実行</span><br>
+          <span class="cmd">cd</span> apps/worker<br>
+          <span class="cmd">npx</span> wrangler deploy
+        </div>
+        <div class="tip warn">
+          <span class="tip-icon">⚠️</span>
+          <span>API_KEY は外部からのアクセスを守る重要なキーです。推測されにくいランダムな文字列（32文字以上推奨）を設定してください。</span>
+        </div>
+        <div class="substeps" style="margin-top:16px;">
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              デプロイ成功後、Worker URL（例：<code style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;">https://your-worker.workers.dev</code>）が表示される。これをメモする
+            </div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">
+              LINE Developers ConsoleのWebhook URLに <code style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;">https://your-worker.workers.dev/webhook</code> を登録し、Webhookの利用をONにする
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PHASE 3 -->
+  <div class="section-label">Phase 3 — Claude Code連携</div>
+
+  <div class="steps">
+
+    <!-- STEP 6 -->
+    <div class="step" id="step6">
+      <div class="step-header" onclick="toggleStep('step6')">
+        <div class="step-num">06</div>
+        <div class="step-title-wrap">
+          <div class="step-title">管理画面を起動して動作確認</div>
+          <div class="step-meta">Next.js 15 · localhost:3001</div>
+        </div>
+        <span class="step-tag tag-required">REQUIRED</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="step-body">
+        <p class="step-desc">Next.js製の管理画面をローカルで起動し、デプロイしたWorker APIに接続して動作を確認します。</p>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+          <span class="comment"># プロジェクトルートに戻る</span><br>
+          <span class="cmd">cd</span> ../../<br><br>
+          <span class="comment"># WebアプリのAPI URL環境変数を設定</span><br>
+          <span class="cmd">echo</span> <span class="str">'NEXT_PUBLIC_API_URL=https://your-worker.workers.dev'</span> \<br>
+            &nbsp;&nbsp;> apps/web/.env.local<br><br>
+          <span class="comment"># 管理画面を起動（http://localhost:3001 で開く）</span><br>
+          <span class="cmd">pnpm</span> dev:web
+        </div>
+        <div class="substeps">
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">ブラウザで <code style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;">http://localhost:3001</code> を開く</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">STEP 5で設定した API_KEY を入力してログイン</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">ダッシュボードが表示されれば正常に接続完了 🎉</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7 -->
+    <div class="step" id="step7">
+      <div class="step-header" onclick="toggleStep('step7')">
+        <div class="step-num">07</div>
+        <div class="step-title-wrap">
+          <div class="step-title">Claude CodeにMCPサーバーを追加する</div>
+          <div class="step-meta">MCP Server · 17 Tools · 自然言語操作</div>
+        </div>
+        <span class="step-tag tag-key">CORE</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="step-body">
+        <p class="step-desc">これが最大の目玉。Claude CodeのMCPに LINE Harness を追加することで、チャットの自然言語だけでLINE運用の全操作が可能になります。</p>
+        <div class="substeps">
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">Claude Codeを起動し、<code style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;">/mcp</code> コマンドでMCP設定を開く</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">以下の設定を追加する（<code style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;">claude_desktop_config.json</code> または <code style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;">.mcp.json</code>）</div>
+          </div>
+        </div>
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+          {<br>
+          &nbsp;&nbsp;<span class="key">"mcpServers"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"line-harness"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"command"</span>: <span class="str">"npx"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"args"</span>: [<span class="str">"@line-harness/mcp-server"</span>],<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"env"</span>: {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"LINE_HARNESS_API_URL"</span>: <span class="str">"https://your-worker.workers.dev"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"LINE_HARNESS_API_KEY"</span>: <span class="str">"YOUR_API_KEY"</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;}<br>
+          }
+        </div>
+        <div class="substeps" style="margin-top:16px;">
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">Claude Codeを再起動して設定を反映</div>
+          </div>
+          <div class="substep">
+            <div class="substep-dot"></div>
+            <div class="substep-text">以下のような自然言語で操作できるようになる：</div>
+          </div>
+        </div>
+        <div class="code-block" style="border-left-color:var(--accent);">
+          <span class="comment">▶ Claude Codeへの指示例</span><br><br>
+          <span class="str">「友だち全員に明日10時にセール告知して」</span><br>
+          <span class="str">「来週セミナー参加者に3日前と前日にリマインド送って」</span><br>
+          <span class="str">「フォーム作って申込者にVIPタグつけてフォローシナリオ開始して」</span><br>
+          <span class="str">「友だちのスコア分布を分析して改善提案して」</span>
+        </div>
+        <div class="tip">
+          <span class="tip-icon">🤖</span>
+          <span>17種のMCPツールが公開されており、友だち管理・タグ付与・ステップ配信・ブロードキャスト予約・自動化ルール設定がすべてAI経由で完結します。</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COST SUMMARY -->
+  <div class="section-label">Cost Summary — 費用まとめ</div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:24px;animation:fadeUp 0.6s ease 0.9s both;">
+    <table class="summary-table">
+      <thead>
+        <tr>
+          <th>サービス</th>
+          <th>用途</th>
+          <th>費用</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>LINE Harness</td>
+          <td>CRM本体（OSS）</td>
+          <td class="free">¥0</td>
+        </tr>
+        <tr>
+          <td>Cloudflare Workers</td>
+          <td>APIサーバー（10万req/日まで）</td>
+          <td class="free">¥0</td>
+        </tr>
+        <tr>
+          <td>Cloudflare D1</td>
+          <td>データベース（5GBまで）</td>
+          <td class="free">¥0</td>
+        </tr>
+        <tr>
+          <td>LINE公式アカウント</td>
+          <td>メッセージ配信（月1,000通まで）</td>
+          <td class="free">¥0</td>
+        </tr>
+        <tr>
+          <td>GitHub</td>
+          <td>ソースコード管理</td>
+          <td class="free">¥0</td>
+        </tr>
+        <tr>
+          <td>Claude Code</td>
+          <td>AI自然言語操作（API利用料）</td>
+          <td class="paid">従量課金</td>
+        </tr>
+        <tr>
+          <td>LINE公式アカウント</td>
+          <td>月1,000通を超える配信</td>
+          <td class="paid">従量課金</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <div>LINE Harness OSS — MITライセンス・商用利用可</div>
+    <div style="margin-top:8px;">
+      <a href="https://github.com/Shudesu/line-harness-oss" target="_blank">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://shudesu.github.io/line-harness-oss/" target="_blank">公式サイト</a>
+      &nbsp;·&nbsp;
+      <a href="https://zenn.dev/nodashuichi/articles/2bfd7181ca724e" target="_blank">作者のZenn記事</a>
+    </div>
+    <div style="margin-top:16px;opacity:0.4;">Generated with Claude · 2026</div>
+  </div>
+
+</div>
+
+<script>
+  // Toggle steps
+  function toggleStep(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = (scrollTop / docHeight) * 100;
+    document.getElementById('progress').style.width = progress + '%';
+  });
+
+  // Copy button
+  function copyCode(btn) {
+    const block = btn.parentElement;
+    const text = block.innerText.replace('COPY\n', '').replace('COPY', '');
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      btn.textContent = 'COPIED!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'COPY';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>
